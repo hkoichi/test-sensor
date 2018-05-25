@@ -1,6 +1,6 @@
 package team_emergensor.co.jp.emergensor.Entity
 
-/**
- * Created by koichihasegawa on 2018/05/24.
- */
-open class Message(val timeStamp: Long, val value: SensorValue)
+
+class Message<out T>(val timeStamp: Long, val body: Body<T>) {
+    class Body<out T>(val size: Int = 1, val data: T)
+}

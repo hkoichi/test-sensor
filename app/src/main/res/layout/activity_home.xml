@@ -18,8 +18,7 @@
 
             <include
                 android:id="@+id/toolBar"
-                layout="@layout/toolbar">
-            </include>
+                layout="@layout/toolbar"></include>
 
             <android.support.design.widget.TabLayout
                 android:id="@+id/tabLayout"

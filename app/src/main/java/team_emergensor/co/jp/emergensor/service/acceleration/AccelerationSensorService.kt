@@ -26,7 +26,7 @@ class AccelerationSensorService : Service() {
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         handleStart()
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
