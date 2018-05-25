@@ -47,6 +47,7 @@ class AccelerationSensorService : Service() {
 
     private fun handleEnd() {
         sensorManager.unregisterListener(accelerationSensorEventSubscriber)
+        accelerationSensorEventSubscriber.dispose()
     }
 
     companion object {

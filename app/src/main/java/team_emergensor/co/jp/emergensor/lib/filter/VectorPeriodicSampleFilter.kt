@@ -1,16 +1,16 @@
 package team_emergensor.co.jp.emergensor.lib.filter
 
+import io.reactivex.Observable
 import team_emergensor.co.jp.emergensor.Entity.Message
 import team_emergensor.co.jp.emergensor.Entity.SensorValue
 
 class VectorPeriodicSampleFilter(private val period: Long)
-    : One2ManyFilter() {
+    : Filter.OneToMany<Message, Message>() {
 
     private var lastMessage: Message? = null
     private var lastTime: Long = 0
 
-    override fun filtering(message: Message) {
-
+    override fun filter(message: Message) = Observable.create<Message> {
         lastMessage?.let { lastMessage ->
             while (lastTime + period <= message.timeStamp) {
                 lastTime += period
@@ -19,17 +19,19 @@ class VectorPeriodicSampleFilter(private val period: Long)
                 val b = lastTime - lastMessage.timeStamp
                 val ratio = b.toFloat() / a.toFloat()
 
-                publish(Message(lastTime, SensorValue.AccelerationSensorValue(message.value.periodicSampleFilter(ratio))))
+                it.onNext(Message(lastTime, SensorValue.AccelerationSensorValue(message.value.periodicSampleFilter(ratio))))
+
             }
-            log("vectorsamplefilter", message.value.data.map { it.toString() }.toString())
             this.lastMessage = message
-            return
+            it.onComplete()
         }
 
         lastMessage = message
         lastTime = message.timeStamp
-        publish(message)
+        it.onNext(message)
+        it.onComplete()
     }
+
 
     private fun SensorValue.periodicSampleFilter(ratio: Float): Array<Float> {
         val lastMessage = lastMessage!!

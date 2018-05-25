@@ -3,7 +3,7 @@ package team_emergensor.co.jp.emergensor.service.acceleration
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
-import io.reactivex.Observable
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.subjects.PublishSubject
 import team_emergensor.co.jp.emergensor.Entity.Message
 import team_emergensor.co.jp.emergensor.Entity.SensorValue
@@ -11,6 +11,8 @@ import team_emergensor.co.jp.emergensor.lib.filter.VectorPeriodicSampleFilter
 
 
 class AccelerationSensorEventSubscriber : SensorEventListener {
+
+    private val compositeDisposable = CompositeDisposable()
 
     /**
      * publish subject
@@ -23,17 +25,19 @@ class AccelerationSensorEventSubscriber : SensorEventListener {
     /**
      * filters
      */
-    private val vectorPereiodicSampleFilter = VectorPeriodicSampleFilter(1 * 1000 * 1000 / 100)
+    private val vectorPeriodicSampleFilter = VectorPeriodicSampleFilter(1 * 1000 * 1000 / 100)
 
     /**
      * init
      */
     init {
-        // observableをsetしてスタート
-        vectorPereiodicSampleFilter.setObservableSource(sensorEventSubject)
+        val disposable = sensorEventSubject
                 .flatMap {
-                    Observable.fromCallable { "きた" }
-                }
+                    vectorPeriodicSampleFilter.filter(it)
+                }.map {
+
+                }.subscribe()
+        compositeDisposable.add(disposable)
     }
 
     /**
@@ -50,6 +54,10 @@ class AccelerationSensorEventSubscriber : SensorEventListener {
             val message = Message(event.timestamp, value)
             sensorEventSubject.onNext(message)
         }
+    }
+
+    fun dispose() {
+        if (!compositeDisposable.isDisposed) compositeDisposable.dispose()
     }
 
 }
