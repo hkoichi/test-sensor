@@ -18,7 +18,7 @@
         </activity>
 
         <service
-            android:name=".service.AccelerationSensorService"
+            android:name=".service.acceleration.AccelerationSensorService"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

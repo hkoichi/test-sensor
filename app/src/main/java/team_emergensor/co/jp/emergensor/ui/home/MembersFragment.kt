@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import team_emergensor.co.jp.emergensor.R
 import team_emergensor.co.jp.emergensor.databinding.FragmentMembersBinding
-import team_emergensor.co.jp.emergensor.service.AccelerationSensorService
+import team_emergensor.co.jp.emergensor.service.acceleration.AccelerationSensorService
 
 class MembersFragment : Fragment() {
     private lateinit var binding: FragmentMembersBinding
