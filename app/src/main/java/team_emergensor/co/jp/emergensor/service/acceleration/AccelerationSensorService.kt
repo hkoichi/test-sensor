@@ -6,6 +6,7 @@ import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.IBinder
+import android.util.Log
 
 
 class AccelerationSensorService : Service() {
@@ -19,7 +20,7 @@ class AccelerationSensorService : Service() {
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     }
 
-    private val accelerationSensorEventSubscriber = AccelerationSensorEventSubscriber()
+    private val accelerationSensorEventSubscriber = AccelerationSensorEventAnalysesSubscriber()
 
     /**
      * lifecycle methods
@@ -42,10 +43,12 @@ class AccelerationSensorService : Service() {
      * methods
      */
     private fun handleStart() {
-        sensorManager.registerListener(accelerationSensorEventSubscriber, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+        Log.d("sensor", "start")
+        sensorManager.registerListener(accelerationSensorEventSubscriber, sensor, SensorManager.SENSOR_DELAY_UI)
     }
 
     private fun handleEnd() {
+        Log.d("sensor", "end")
         sensorManager.unregisterListener(accelerationSensorEventSubscriber)
         accelerationSensorEventSubscriber.dispose()
     }

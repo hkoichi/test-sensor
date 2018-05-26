@@ -11,24 +11,27 @@ import team_emergensor.co.jp.emergensor.Entity.Message
 import team_emergensor.co.jp.emergensor.lib.filter.*
 
 
-class AccelerationSensorEventSubscriber : SensorEventListener {
+class AccelerationSensorEventAnalysesSubscriber : SensorEventListener {
 
     private val compositeDisposable = CompositeDisposable()
+    private var sendCount = 0
 
     /**
      * publish subject
      *
      */
-    private val sensorEventSubject = PublishSubject.create<Message<Array<Float>>>()
+    private val sensorEventSubject = PublishSubject.create<Message<Array<Double>>>()
 
     /**
      * filters
      */
-    private val vectorPeriodicSampleFilter = VectorPeriodicSampleFilter(1 * 1000 * 1000 / 100)
+    private val vectorPeriodicSampleFilter = VectorPeriodicSampleFilter(DATA_DURATION)
     private val normFunctionFilter = NormFunctionFilter()
-    private val bufferFilter = BufferFilter(256)
+    private val bufferFilter = BufferFilter(FFT_BUFFER_SIZE)
     private val meanFunctionFilter = MeanFunctionFilter()
     private val varianceFunctionFilter = VarianceFunctionFilter()
+    private val hanningFunctionFilter = HanningFunctionFilter()
+    private val fftFunctionFilter = FFTFunctionFilter()
 
     /**
      * init (subscribe data(subject))
@@ -37,21 +40,23 @@ class AccelerationSensorEventSubscriber : SensorEventListener {
         val disposable = sensorEventSubject
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .flatMap {
+                .concatMapEager {
                     vectorPeriodicSampleFilter.filter(it)
                 }.map {
                     normFunctionFilter.filter(it)
-                }.flatMap {
+                }.concatMap {
                     bufferFilter.filter(it)
                 }.map {
                     arrayOf(
                             meanFunctionFilter.filter(it).body.data,
-                            varianceFunctionFilter.filter(it).body.data
+                            varianceFunctionFilter.filter(it).body.data,
+                            fftFunctionFilter.filter(hanningFunctionFilter.filter(it))
                     )
                 }.subscribe({
-                    Log.d("data cominngggg", "平均${it[0]}, 分散${it[1]}")
+                    Log.d("sensor", "平均${it[0]}, 分散${it[1]}")
+                }, {
+                    Log.d("sensor", it.message)
                 })
-
         compositeDisposable.add(disposable)
     }
 
@@ -65,14 +70,23 @@ class AccelerationSensorEventSubscriber : SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         val sensorEvent = event ?: return
         if (sensorEvent.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            val body = Message.Body(3, arrayOf(sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]))
-            val message = Message(event.timestamp, body)
+            val body = Message.Body(3, arrayOf(sensorEvent.values[0] * 0.135, sensorEvent.values[1] * 0.135, sensorEvent.values[2] * 0.135))
+            val message = Message(event.timestamp / 100, body)
+
+            if (sendCount > DEBUG_MAX_SEND_COUNT - 1) return
             sensorEventSubject.onNext(message) // publish
+            sendCount++
         }
     }
 
     fun dispose() {
         if (!compositeDisposable.isDisposed) compositeDisposable.dispose()
+    }
+
+    companion object {
+        const val DEBUG_MAX_SEND_COUNT = 10
+        const val FFT_BUFFER_SIZE = 256
+        const val DATA_DURATION: Long = 1 * 1000 * 1000 / 100
     }
 
 }

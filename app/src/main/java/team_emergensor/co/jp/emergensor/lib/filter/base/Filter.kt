@@ -5,11 +5,11 @@ import team_emergensor.co.jp.emergensor.Entity.Message
 
 
 sealed class Filter {
-    abstract class Map<T, O> : Filter() {
+    abstract class Map<in T, out O> : Filter() {
         abstract fun filter(message: Message<T>): Message<O>
     }
 
-    abstract class FlatMap<T, O> : Filter() {
+    abstract class FlatMap<in T, O> : Filter() {
         abstract fun filter(message: Message<T>): Observable<Message<O>>
     }
 }
